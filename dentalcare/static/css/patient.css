@@ -1,0 +1,247 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+body {
+    display: flex;
+    min-height: 100vh;
+    background: #f7f9fc;
+    color: #333;
+}
+.sidebar {
+    width: 250px;
+    background: #2b6777;
+    color: white;
+    padding: 20px;
+    position: fixed;
+    height: 100vh;
+}
+.logo {
+    width: 200px;
+    height: 70px;
+    margin-bottom: 10px;
+}
+.sidebar ul {
+    list-style: none;
+    margin-top: 20px;
+}
+.sidebar ul li {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    transition: background 0.3s;
+}
+.sidebar ul li:hover {
+    background: #52ab98;
+}
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.sidebar ul li i {
+    margin-right: 10px;
+}
+.main-content {
+    margin-left: 250px;
+    padding: 20px;
+    width: calc(100% - 250px);
+}
+.header {
+    background: #fff;
+    padding: 15px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+}
+.add-btn {
+    padding: 10px 20px;
+    background: #2b6777;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.add-btn:hover {
+    background: #22626c;
+}
+.add-btn i {
+    margin-right: 8px;
+}
+.search-input {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 250px;
+    outline: none;
+}
+.search-input:focus {
+    border-color: #2b6777;
+}
+.section {
+    background: white;
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.section table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 25px;
+}
+.section th, .section td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+    text-align: left;
+    font-size: 14px;
+}
+.section thead tr {
+    background-color: #e3f2f9;
+    color: #2b6777;
+    font-weight: bold;
+}
+.btn-blue {
+    background-color: #2b6777;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.btn-blue:hover {
+    background-color: #3c9683;
+}
+.paid {
+    color: green;
+    font-weight: bold;
+}
+.due {
+    color: red;
+    font-weight: bold;
+}
+.multi-select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 13px;
+    background-color: #f9f9f9;
+}
+.form-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 350px;
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: right 0.3s ease;
+    z-index: 999;
+    overflow-y: auto;
+}
+
+.form-panel.visible {
+    right: 0;
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #2b6777;
+    cursor: pointer;
+}
+
+.patient-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.patient-form label {
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #2b6777;
+}
+
+.patient-form input,
+.patient-form select,
+.patient-form textarea {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+}
+
+.patient-form input:focus,
+.patient-form textarea:focus,
+.patient-form select:focus {
+    border-color: #2b6777;
+}
+
+.action-icons {
+    display: flex;
+    gap: 10px;
+    font-size: 16px;
+}
+
+.action-icons i {
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.action-icons .fa-edit {
+    color: #2b6777;
+}
+
+.action-icons .fa-edit:hover {
+    background-color: #e0f0ff;
+}
+
+.action-icons .fa-trash-alt {
+    color: #dc3545;
+}
+
+.action-icons .fa-trash-alt:hover {
+    background-color: #fdecea;
+}
+
+.btn-blue {
+    background-color: #2b6777;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-red {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}

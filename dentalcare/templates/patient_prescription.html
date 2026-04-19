@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Prescribe Medicine</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #f4f7fc;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .top-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      background-color: #2b6777;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background-color: #3a8899;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .medicine-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .medicine-table th, .medicine-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .medicine-table thead {
+      background-color: #2b6777;
+      color: white;
+    }
+
+    .delete-icon {
+      color: crimson;
+      cursor: pointer;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 400px;
+      height: 100%;
+      background: white;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      z-index: 10;
+    }
+
+    .modal h2 {
+      margin-bottom: 20px;
+      color: #2b6777;
+    }
+
+    .modal label {
+      font-weight: 500;
+      margin-top: 10px;
+      display: block;
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .submit-btn {
+      margin-top: 20px;
+      width: 100%;
+      background-color: #52ab98;
+    }
+
+    .submit-btn:hover {
+      background-color: #3c9683;
+    }
+
+    .close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    select#itemForm {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-family: 'Poppins', sans-serif;
+  background-color: #fff;
+  color: #333;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%232b6777" class="bi bi-caret-down-fill" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658A.5.5 0 0 1 2.825 5h10.35a.5.5 0 0 1 .374.658l-4.796 5.482a.5.5 0 0 1-.756 0z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+
+
+@media print {
+    body * {
+      visibility: hidden;
+    }
+  
+    .printable, .printable * {
+      visibility: visible;
+    }
+  
+    .printable {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+  
+    .medicine-table th:nth-child(1),
+    .medicine-table td:nth-child(1) {
+      width: 60%;
+    }
+  
+    .medicine-table th:nth-child(2),
+    .medicine-table td:nth-child(2) {
+      width: 25%;
+    }
+  
+    .medicine-table th:nth-child(3),
+    .medicine-table td:nth-child(3) {
+      width: 60%;
+    }
+  
+    /* Hide only inside print */
+    .medicine-table th:last-child,
+    .medicine-table td:last-child {
+      display: none !important;
+    }
+  }
+  
+.medicine-table th,
+  .medicine-table td {
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+
+  select, input[type="text"], input[type="number"], textarea {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 100%;
+    margin-bottom: 10px;
+    font-size: 16px;
+    outline: none;
+    transition: 0.3s;
+}
+
+select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+    border-color: #0d6efd; /* Nice blue highlight */
+    box-shadow: 0 0 5px rgba(13, 110, 253, 0.5);
+}
+
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-buttons">
+    <a href="{% url 'patient_dashboard' %}#row-{{ request.GET.back_id }}"><button class="btn" >Back</button></a>
+    <button class="btn" id="openModalBtn">Add Medicine</button>
+    <button class="btn" onclick="printToday()">Print</button>
+  </div>
+</div>
+{% if messages %}
+  <div style="margin: 20px;">
+    {% for message in messages %}
+      <div style="
+          padding: 10px;
+          border-radius: 5px;
+          margin-bottom: 10px;
+          color: {% if message.tags == 'error' %}#a94442{% else %}#155724{% endif %};
+          background-color: {% if message.tags == 'error' %}#f8d7da{% else %}#d4edda{% endif %};
+          border: 1px solid {% if message.tags == 'error' %}#f5c6cb{% else %}#c3e6cb{% endif %};
+      ">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="content">
+    <div class="printable">
+      
+      <p><strong>Patient Name:</strong> {{ patient.name }}</p>
+  
+      <table class="medicine-table" id="medicineTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Frequency</th>
+            <th>Notes</th>
+            <th>Form</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="medicineBody">
+          {% for medicine in prescriptions %}
+            <tr data-date="{{ medicine.date }}">
+              <td>{{medicine.date}}</td>
+              <td>{{ medicine.item }}</td>
+              <td>{{ medicine.frequency }}</td>
+              <td>{{ medicine.notes }}</td>
+              <td>{{ medicine.form }}</td>
+              <td>
+                <a href="{% url 'delete_prescription' medicine.id %}" class="delete-icon"><i class="fas fa-trash"></i></a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5">No prescriptions yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+<!-- Modal -->
+<div class="modal" id="medicineModal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2>Add Medicine</h2>
+    <form method="POST">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn submit-btn">Add</button>
+    </form>
+  </div>
+
+<script>
+    const modal = document.getElementById('medicineModal');
+    const openBtn = document.getElementById('openModalBtn');
+    
+    openBtn.onclick = () => modal.style.display = 'block';
+    function closeModal() { modal.style.display = 'none'; }
+    
+    function printToday() {
+      const today = "{{ today }}";
+      const rows = document.querySelectorAll("#medicineBody tr");
+      rows.forEach(row => {
+        const rowDate = row.getAttribute('data-date');
+        row.style.display = (rowDate === today) ? 'table-row' : 'none';
+      });
+      window.print();
+      rows.forEach(row => row.style.display = 'table-row');
+    }
+</script>
+
+</body>
+</html>

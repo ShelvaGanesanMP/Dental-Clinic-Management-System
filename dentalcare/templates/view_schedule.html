@@ -1,0 +1,257 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receptionist Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        .add-schedule-container {
+            margin-bottom: 20px;
+        }
+        
+        .schedule-form .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap; /* optional: ensures responsiveness on smaller screens */
+        }
+        
+        .schedule-form .form-group select,
+        .schedule-form .form-group input[type="date"],
+        .schedule-form .form-group input[type="time"],
+        .schedule-form .form-group button {
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        
+        .schedule-form .form-group button.submit-btn {
+            background-color: #2b6777;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .schedule-form .form-group button.submit-btn:hover {
+            background-color: #52ab98;
+        }
+        #search-name {
+            padding: 8px 12px;
+            font-size: 14px;
+            margin-left: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        
+        .search-container form {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        .logo {
+            position: absolute;
+            top: 5px;
+            right: 25px;
+            width: 200px; 
+            height: 200px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 200px;
+        }
+        .reset-btn{
+            padding: 6px 12px;
+            font-size: 14px;
+            border-radius: 5px;
+            background-color: #2b6777;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .reset-btn:hover{
+            background-color: #52ab98;
+
+        }
+        .search-btn{
+            padding: 6px 12px;
+            font-size: 14px;
+            border-radius: 5px;
+            background-color: #2b6777;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .search-btn:hover{
+            background-color: #52ab98;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <img src="{% static "images/logo1.png" %}" alt="Logo" class="logo">
+        <ul>
+            <li><a href="{% url 'analytics_dashboard' %}"><i class="fa-solid fa-house"></i> Home</a></li>
+            <li><a href="{% url 'view_doctors' %}"><i class="fas fa-user-md"></i> Add Doctors</a></li>
+            <li><a href="{% url 'view_schedule' %}"><i class="fas fa-calendar"></i> Doctor Schedule</a></li>
+            <li><a href="{% url 'patient_dashboard' %}"><i class="fas fa-user-plus"></i> Patients</a></li>
+            <li><a href="{% url 'all_appointments' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+            <li><a href="{% url 'treatment' %}"><i class="fa-solid fa-stethoscope"></i> Treatments</a></li>
+            <li><a href="{% url 'lab_orders' %}"><i class="fa-solid fa-microscope"></i></i>Lab</a></li>
+            <li><a href="{% url 'payment_summary' %}"><i class="fas fa-dollar-sign"></i> Payments</a></li>
+            <li><a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
+        </ul>
+    </div>
+    <div class="content">
+        
+
+        <div class="search-container">
+            
+            <form method="GET">
+                {% csrf_token %}
+                <label for="search-date">Search by Date:</label>
+                <input type="date" id="search-date" name="date" value="{{ request.GET.date }}">
+                <button type="submit" class="search-btn"><i class="fas fa-search"></i> Search</button>
+                <button type="submit" name="date" value="" class="reset-btn"><i class="fa fa-repeat"></i> Reset</button>  
+            </form>
+
+            <form method="GET" id="search-by-name-form">
+                <label for="search-name">Search by Name:</label>
+                <input type="text" id="search-name" name="name" placeholder="Enter doctor name">
+            </form>
+        </div>
+        
+        <div class="add-schedule-container">
+            <form method="POST" class="schedule-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">{{ form.doctor }}</div>
+                    <div class="form-group">{{ form.date }}</div>
+                    <div class="form-group">{{ form.start_time }}</div>
+                    <div class="form-group">{{ form.end_time }}</div>
+                    <div class="form-group">
+                        <button type="submit" class="submit-btn"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="schedule-table">
+            <h2>Doctor Schedule</h2>
+            <div class="add-schedule-container">           
+            </div>            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Doctor</th>
+                        <th>Date</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for schedule in schedules %}
+                        <tr data-id="{{ schedule.id }}">
+                            <td contenteditable="false" class="editable doctor">{{ schedule.doctor.name }}</td>
+                            <td contenteditable="false" class="editable date">{{ schedule.date }}</td>
+                            <td contenteditable="false" class="editable start_time">{{ schedule.start_time }}</td>
+                            <td contenteditable="false" class="editable end_time">{{ schedule.end_time }}</td>
+                            <td>
+                                <button class="edit-btn"><i class="fas fa-pencil-alt"></i></button>
+                                <button class="save-btn" style="display: none;"><i class="fas fa-save"></i></button>
+                                <button class="delete-btn"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>            
+        </div>        
+    </div>
+    <script>
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const row = btn.closest('tr');
+                row.querySelectorAll('.editable').forEach(td => td.contentEditable = true);
+                row.querySelector('.save-btn').style.display = 'inline-block';
+                btn.style.display = 'none';
+            });
+        });
+        
+        document.querySelectorAll('.save-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const row = btn.closest('tr');
+                const id = row.getAttribute('data-id');
+                const doctor = row.querySelector('.doctor').innerText.trim(); 
+                const date = row.querySelector('.date').innerText.trim();
+                const start_time = row.querySelector('.start_time').innerText.trim();
+                const end_time = row.querySelector('.end_time').innerText.trim();
+        
+                fetch('/update_schedule_inline/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: new URLSearchParams({ id, doctor, date, start_time, end_time })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        row.querySelectorAll('.editable').forEach(td => td.contentEditable = false);
+                        row.querySelector('.edit-btn').style.display = 'inline-block';
+                        btn.style.display = 'none';
+                        alert("Updated!");
+                    } else {
+                        alert(data.message || 'Failed');
+                    }
+                });
+            });
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const row = btn.closest('tr');
+                const id = row.getAttribute('data-id');
+                if (confirm("Delete this schedule?")) {
+                    fetch('/delete_schedule/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: new URLSearchParams({ id })
+                    }).then(res => res.json()).then(data => {
+                        if (data.status === 'success') {
+                            row.remove();
+                        } else {
+                            alert('Failed to delete');
+                        }
+                    });
+                }
+            });
+        });
+
+       
+            const nameInput = document.getElementById("search-name");
+            nameInput.addEventListener("input", function () {
+                const filter = this.value.toLowerCase();
+                const rows = document.querySelectorAll(".schedule-table tbody tr");
+                
+                rows.forEach(row => {
+                    const doctorName = row.querySelector(".doctor").innerText.toLowerCase();
+                    if (doctorName.includes(filter)) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            });
+ 
+        
+        </script>        
+</body>
+</html>

@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Appointments</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/appointment.css' %}">
+    <style>
+      .logo {
+            position: absolute;
+            top: 5px;
+            right: 25px;
+            width: 200px; 
+            height: 200px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 200px;
+        }
+         #search-name {
+            font-size: 14px;
+            border-radius: 5px;
+        }
+        .search-box {
+    padding: 8px 12px;
+    
+    border-radius: 5px;
+}
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+      <img src="{% static "images/logo1.png" %}" alt="Logo" class="logo">
+      <ul>
+        <li><a href="{% url 'analytics_dashboard' %}"><i class="fa-solid fa-house"></i> Home</a></li>
+        <li><a href="{% url 'view_doctors' %}"><i class="fas fa-user-md"></i> Add Doctors</a></li>
+          <li><a href="{% url 'view_schedule' %}"><i class="fas fa-calendar"></i> Doctor Schedule</a></li>
+          <li><a href="{% url 'patient_dashboard' %}"><i class="fas fa-user-plus"></i> Patients</a></li>
+          <li><a href="{% url 'all_appointments' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+          <li><a href="{% url 'treatment' %}"><i class="fa-solid fa-stethoscope"></i> Treatments</a></li>
+          <li><a href="{% url 'lab_orders' %}"><i class="fa-solid fa-microscope"></i></i>Lab</a></li>
+          <li><a href="{% url 'payment_summary' %}"><i class="fas fa-dollar-sign"></i> Payments</a></li>
+          <li><a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
+      </ul>
+    </div>
+
+    <div class="main-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+  <div>
+    <label for="filter-date"><strong>Filter by Date:</strong></label>
+    <input type="date" id="filter-date" name="filter-date" class="filter-date">
+    <button id="reset-filter" class="btn" style="margin-left: 10px; "><i class="fa fa-repeat"></i> Reset</button>
+  </div>
+  
+  <div>
+        <label for="search-name"><strong>Search by Name:</strong></label>
+        <input type="text" id="search-name" placeholder="Type patient name..." style=" margin-right: 470px; padding: 10px 5px;">
+    </div>
+</div>
+
+
+        <table class="order-table">
+            <thead>
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Patient Name</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Doctor</th>
+                </tr>
+            </thead>
+            <tbody id="appointmentTableBody">
+                {% for a in appointments %}
+                  <tr data-date="{{ a.date|date:'Y-m-d' }}">
+                    <td>{{ a.patient.id }}</td>
+                    <td>
+                        <a href="{% url 'patient_dashboard' %}#row-{{ a.patient.id }}" style="text-decoration: none; color: inherit;">
+                        {{ a.patient.name }}
+                        </a>
+                    </td>
+                    <td>{{ a.date }}</td>
+                    <td>{{ a.time }}</td>
+                    <td>{{ a.doctor.name }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>                        
+        </table>
+    </div>
+    <script>
+     
+    const dateInput = document.getElementById("filter-date");
+    const nameInput = document.getElementById("search-name");
+    const allRows = document.querySelectorAll("#appointmentTableBody tr");
+
+    function applyFilters() {
+      const selectedDate = dateInput.value;
+      const nameQuery = nameInput.value.toLowerCase();
+
+      allRows.forEach(row => {
+        const rowDate = row.getAttribute("data-date");
+        const name = row.querySelector("td:nth-child(2)").textContent.toLowerCase();
+
+        const dateMatch = !selectedDate || rowDate === selectedDate;
+        const nameMatch = name.includes(nameQuery);
+
+        row.style.display = (dateMatch && nameMatch) ? "" : "none";
+      });
+    }
+
+    dateInput.addEventListener("change", applyFilters);
+    nameInput.addEventListener("input", applyFilters);
+
+    document.getElementById("reset-filter").addEventListener("click", () => {
+      dateInput.value = "";
+      nameInput.value = "";
+      allRows.forEach(row => row.style.display = "");
+    });
+
+
+
+       
+      </script>
+      
+</body>
+</html>

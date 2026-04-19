@@ -1,0 +1,443 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+        body {
+            display: flex;
+            background: #f4f7fc;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background: #2b6777;
+            color: white;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+        }
+        .logo {
+            width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 40px;
+        }
+        .sidebar ul li {
+            padding: 15px;
+            transition: 0.3s;
+        }
+        .sidebar ul li:hover {
+            background: #52ab98;
+        }
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        .sidebar ul li i {
+            margin-right: 10px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 30px;
+            width: calc(100% - 250px);
+        }
+
+        .summary {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #2b6777;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+        th {
+            background-color: #2b6777;
+            color: white;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #2b6777;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        button:hover {
+            background-color: #52ab98;
+        }
+
+        form {
+            display: flex;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
+            input[type="number"] {
+                width: 60px;
+            }
+        }
+       
+      .logo {
+            position: absolute;
+            top: 5px;
+            right: 25px;
+            width: 200px; 
+            height: 200px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 200px;
+        }
+        
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #printSection, #printSection * {
+        visibility: visible;
+    }
+    #printSection {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
+
+
+    
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <img src="{% static 'images/logo1.png' %}" alt="Logo" class="logo">
+    <ul>
+        <li><a href="{% url 'analytics_dashboard' %}"><i class="fa-solid fa-house"></i> Home</a></li>
+        <li><a href="{% url 'view_doctors' %}"><i class="fas fa-user-md"></i> Add Doctors</a></li>
+        <li><a href="{% url 'view_schedule' %}"><i class="fas fa-calendar"></i> Doctor Schedule</a></li>
+        <li><a href="{% url 'patient_dashboard' %}"><i class="fas fa-user-plus"></i> Patients</a></li>
+        <li><a href="{% url 'all_appointments' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+        <li><a href="{% url 'treatment' %}"><i class="fa-solid fa-stethoscope"></i> Treatments</a></li>
+        <li><a href="{% url 'lab_orders' %}"><i class="fa-solid fa-microscope"></i> Lab</a></li>
+        <li><a href="{% url 'payment_summary' %}"><i class="fas fa-dollar-sign"></i> Payments</a></li>
+        <li><a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <h2>Payment Summary</h2>
+<!-- Search and Filter Controls -->
+<!-- Search and Filter Controls -->
+<div style="margin-top: 20px; margin-bottom: 20px;">
+    <label><strong>Search Name:</strong></label>
+    <input type="text" id="searchName" placeholder="Enter patient name" style="padding: 5px; margin-right: 20px;">
+    
+    <label><strong>Filter by Date:</strong></label>
+    <input type="date" id="filterDate" style="padding: 5px; margin-right: 20px;">
+
+    <label><input type="checkbox" id="filterPending" style="margin-left: 20px;"> <strong>Show Pending Only</strong></label>
+
+    <button onclick="resetFilters()" style="margin-left: 20px;">Reset</button>
+</div>
+
+<div style="margin-top: 30px; margin-bottom: 20px;">
+    <label><strong>From:</strong></label>
+    <input type="month" id="fromMonth" style="padding: 5px; margin-right: 20px;">
+    
+    <label><strong>To:</strong></label>
+    <input type="month" id="toMonth" style="padding: 5px; margin-right: 20px;">
+
+    <button onclick="generateSummary()">Generate Summary</button>
+    <button onclick="resetSummary()">Reset</button>
+    <button onclick="printSummary()">Print Summary</button>
+</div>
+
+<!-- Summary Section -->
+<div id="printSection" style="display: none; margin-top: 20px;">
+    <h3>Payment Summary</h3>
+    <p><strong>Printed On:</strong> <span id="printedOn"></span></p>
+    <p><strong>From:</strong> <span id="fromPeriod"></span> &nbsp; <strong>To:</strong> <span id="toPeriod"></span></p>
+    
+    <table style="width: 100%; border-collapse: collapse; background: #fff; margin-top: 10px;">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Total Amount</th>
+                <th>Paid</th>
+                <th>Pending</th>
+            </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+        <tfoot>
+            <tr>
+                <th>Total</th>
+                <th id="totalAmountSum">₹0</th>
+                <th id="totalPaidSum">₹0</th>
+                <th id="totalPendingSum">₹0</th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+
+
+
+<div id="totals">
+    <strong>Total Amount:</strong> ₹<span id="totalAmount">{{ total_amount }}</span> |
+    <strong>Total Paid:</strong> ₹<span id="totalPaid">{{ total_paid }}</span> |
+    <strong>Total Pending:</strong> ₹<span id="totalPending">{{ total_pending }}</span>
+</div>
+
+<table id="paymentTable">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Patient ID</th>
+            <th>Name</th>
+            <th>Treatment</th>
+            <th>Amount</th>
+            <th>Paid</th>
+            <th>Pending</th>
+            <th>Add Payment</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in payments|dictsortreversed:"date" %}
+        <tr>
+            <td>{{ row.date }}</td>
+            <td>{{ row.patient.id }}</td>
+            <td>{{ row.patient.name }}</td>
+            <td>{{ row.treatment.name }}</td>
+            <td data-amount="{{ row.amount }}">₹{{ row.amount }}</td>
+            <td data-paid="{{ row.paid }}">₹{{ row.paid }}</td>
+            <td data-pending="{{ row.pending }}">₹{{ row.pending }}</td>
+            <td>
+                <form method="post" action="{% url 'add_payment' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="diagnosis_id" value="{{ row.diagnosis.id }}">
+                    <input type="number" step="0.01" name="paid_amount" placeholder="₹" required>
+                    <button type="submit" class="btn">Save</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</div>
+
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchName");
+    const dateInput = document.getElementById("filterDate");
+    const pendingCheckbox = document.getElementById("filterPending");
+    const rows = document.querySelectorAll("#paymentTable tbody tr");
+
+    const totalAmountEl = document.getElementById("totalAmount");
+    const totalPaidEl = document.getElementById("totalPaid");
+    const totalPendingEl = document.getElementById("totalPending");
+
+    function formatDateToYYYYMMDD(dateStr) {
+        const date = new Date(dateStr);
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function filterTable() {
+        const searchText = searchInput.value.toLowerCase();
+        const selectedDate = dateInput.value;
+        const showPendingOnly = pendingCheckbox.checked;
+
+        let totalAmount = 0;
+        let totalPaid = 0;
+        let totalPending = 0;
+
+        rows.forEach(row => {
+            const name = row.children[2].textContent.toLowerCase();
+            const rawDate = row.children[0].textContent;
+            const formattedRowDate = formatDateToYYYYMMDD(rawDate);
+            const pending = parseFloat(row.querySelector('[data-pending]').getAttribute('data-pending')) || 0;
+
+            const matchName = name.includes(searchText);
+            const matchDate = selectedDate === "" || formattedRowDate === selectedDate;
+            const matchPending = !showPendingOnly || pending > 0;
+
+            if (matchName && matchDate && matchPending) {
+                row.style.display = "";
+                totalAmount += parseFloat(row.querySelector('[data-amount]').getAttribute('data-amount')) || 0;
+                totalPaid += parseFloat(row.querySelector('[data-paid]').getAttribute('data-paid')) || 0;
+                totalPending += pending;
+            } else {
+                row.style.display = "none";
+            }
+        });
+
+        totalAmountEl.textContent = totalAmount.toFixed(2);
+        totalPaidEl.textContent = totalPaid.toFixed(2);
+        totalPendingEl.textContent = totalPending.toFixed(2);
+    }
+
+    function resetFilters() {
+        searchInput.value = "";
+        dateInput.value = "";
+        pendingCheckbox.checked = false;
+        filterTable();
+    }
+
+    searchInput.addEventListener("input", filterTable);
+    dateInput.addEventListener("change", filterTable);
+    pendingCheckbox.addEventListener("change", filterTable);
+
+    // Initial call to show totals correctly
+    filterTable();
+
+    // Expose resetFilters globally
+    window.resetFilters = resetFilters;
+});
+
+function generateSummary() {
+    const fromMonth = document.getElementById("fromMonth").value;
+    const toMonth = document.getElementById("toMonth").value;
+
+    if (!fromMonth || !toMonth) {
+        alert("Please select both from and to months.");
+        return;
+    }
+
+    const start = new Date(fromMonth + "-01");
+    const end = new Date(toMonth + "-01");
+    end.setMonth(end.getMonth() + 1); // include full last month
+    end.setDate(0);
+
+    const summary = {}; // { 'April 2024': { total: 0, paid: 0, pending: 0 }, ... }
+
+    const rows = document.querySelectorAll("#paymentTable tbody tr");
+    rows.forEach(row => {
+        const rawDate = row.children[0].textContent;
+        const dateObj = new Date(rawDate);
+
+        if (dateObj >= start && dateObj < end) {
+            const monthYear = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            if (!summary[monthYear]) {
+                summary[monthYear] = { total: 0, paid: 0, pending: 0 };
+            }
+
+            summary[monthYear].total += parseFloat(row.querySelector('[data-amount]').getAttribute('data-amount')) || 0;
+            summary[monthYear].paid += parseFloat(row.querySelector('[data-paid]').getAttribute('data-paid')) || 0;
+            summary[monthYear].pending += parseFloat(row.querySelector('[data-pending]').getAttribute('data-pending')) || 0;
+        }
+    });
+
+    // Fill summary table
+    const summaryBody = document.getElementById("summaryBody");
+    summaryBody.innerHTML = "";
+
+    let total = 0, paid = 0, pending = 0;
+
+    for (const [month, data] of Object.entries(summary)) {
+        summaryBody.innerHTML += `
+            <tr>
+                <td>${month}</td>
+                <td>₹${data.total.toFixed(2)}</td>
+                <td>₹${data.paid.toFixed(2)}</td>
+                <td>₹${data.pending.toFixed(2)}</td>
+            </tr>
+        `;
+        total += data.total;
+        paid += data.paid;
+        pending += data.pending;
+    }
+
+    document.getElementById("totalAmountSum").textContent = "₹" + total.toFixed(2);
+    document.getElementById("totalPaidSum").textContent = "₹" + paid.toFixed(2);
+    document.getElementById("totalPendingSum").textContent = "₹" + pending.toFixed(2);
+
+    // Display section
+    document.getElementById("printSection").style.display = "block";
+
+    // Printed On and Period
+    document.getElementById("printedOn").textContent = new Date().toLocaleString();
+    document.getElementById("fromPeriod").textContent = fromMonth;
+    document.getElementById("toPeriod").textContent = toMonth;
+}
+
+function resetSummary() {
+    document.getElementById("fromMonth").value = "";
+    document.getElementById("toMonth").value = "";
+    document.getElementById("printSection").style.display = "none";
+}
+
+function printSummary() {
+    if (document.getElementById("printSection").style.display === "none") {
+        alert("Please generate the summary first.");
+        return;
+    }
+
+    window.print();
+}
+
+
+
+</script>
+
+    
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!-- xray_gallery.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ patient.name }} - X-Ray Gallery</title>
+  <style> /* Use your provided CSS here */
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 0;
+    }
+  
+    .back-button {
+        margin: 10px;
+        padding: 10px 20px;
+        background-color: #3c9683;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+  
+    .container {
+        max-width: 900px;
+        margin: auto;
+        padding: 20px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  
+    h2 {
+        text-align: center;
+    }
+  
+    .upload-section {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+  
+    .gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+    }
+  
+    .image-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+  
+    .image-wrapper img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border: 2px solid #ccc;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+  
+    .delete-btn {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: red;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+  
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 10;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.8);
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+  
+    .modal img {
+        max-width: 90%;
+        max-height: 60vh;
+        margin-bottom: 20px;
+        filter: none;
+        transform: scale(1);
+    }
+  
+    .sliders {
+        width: 300px;
+        color: white;
+    }
+  
+    .sliders label {
+        display: block;
+        margin-top: 10px;
+    }
+  
+    .modal-close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <a href="{% url 'patient_dashboard' %}#row-{{ request.GET.back_id }}"><button class="back-button" onclick="history.back()">⬅ Back</button></a>
+
+<div class="container">
+  <h2>{{ patient.name }} - Dental X-Ray & Image Gallery</h2>
+
+  <div class="upload-section">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.image }}
+      <button type="submit" class="back-button" style="background-color: #357edd;">Upload</button>
+    </form>
+  </div>
+
+  <div class="gallery" id="gallery">
+    {% for xray in xrays %}
+      <div class="image-wrapper">
+        <img src="{{ xray.image.url }}" onclick="openModal('{{ xray.image.url }}')">
+        <a href="{% url 'delete_xray' xray.id %}">
+          <button class="delete-btn" onclick="return confirm('Delete this X-ray?')">✖</button>
+        </a>
+      </div>
+    {% empty %}
+      <p>No X-rays uploaded yet.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <span class="modal-close" onclick="closeModal()">✖</span>
+  <img id="modalImage" src="">
+  <div class="sliders">
+    <label>Grayscale <input type="range" min="0" max="100" value="0" id="grayscaleSlider"></label>
+    <label>Zoom <input type="range" min="1" max="3" value="1" step="0.1" id="zoomSlider"></label>
+    <label>Thermal <input type="range" min="0" max="100" value="0" id="thermalSlider"></label>
+  </div>
+</div>
+
+<script>
+
+const modal = document.getElementById("modal");
+const modalImage = document.getElementById("modalImage");
+
+const grayscaleSlider = document.getElementById("grayscaleSlider");
+const zoomSlider = document.getElementById("zoomSlider");
+const thermalSlider = document.getElementById("thermalSlider");
+
+function openModal(src) {
+  modal.style.display = "flex";
+  modalImage.src = src;
+  grayscaleSlider.value = 0;
+  zoomSlider.value = 1;
+  thermalSlider.value = 0;
+
+  
+  modalImage.onload = function() {
+    updateFilters();
+  };
+}
+
+
+function closeModal() {
+  modal.style.display = "none";
+}
+
+
+function updateFilters() {
+  const grayscale = grayscaleSlider.value;
+  const zoom = zoomSlider.value;
+  const thermal = thermalSlider.value;
+
+  const grayscaleValue = `grayscale(${grayscale}%)`;
+  const thermalValue = `sepia(${thermal}%) hue-rotate(${thermal * 3.6}deg)`; 
+
+  
+  modalImage.style.filter = `${grayscaleValue} ${thermalValue}`;
+  modalImage.style.transform = `scale(${zoom})`;
+}
+
+
+grayscaleSlider.oninput = updateFilters;
+zoomSlider.oninput = updateFilters;
+thermalSlider.oninput = updateFilters;
+</script>
+
+</body>
+</html>

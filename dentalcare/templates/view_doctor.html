@@ -1,0 +1,203 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receptionist Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        .logo {
+            position: absolute;
+            top: 5px;
+            right: 25px;
+            width: 200px; 
+            height: 200px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 200px;
+        }
+    </style>
+    
+</head>
+<body>
+    <div class="sidebar">
+        <img src="{% static "images/logo1.png" %}" alt="Logo" class="logo">
+        <ul>
+            <li><a href="{% url 'analytics_dashboard' %}"><i class="fa-solid fa-house"></i> Home</a></li>
+            <li><a href="{% url 'view_doctors' %}"><i class="fas fa-user-md"></i> Add Doctors</a></li>
+            <li><a href="{% url 'view_schedule' %}"><i class="fas fa-calendar"></i> Doctor Schedule</a></li>
+            <li><a href="{% url 'patient_dashboard' %}"><i class="fas fa-user-plus"></i> Patients</a></li>
+            <li><a href="{% url 'all_appointments' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+            <li><a href="{% url 'treatment' %}"><i class="fa-solid fa-stethoscope"></i> Treatments</a></li>
+            <li><a href="{% url 'lab_orders' %}"><i class="fa-solid fa-microscope"></i></i>Lab</a></li>
+            <li><a href="{% url 'payment_summary' %}"><i class="fas fa-dollar-sign"></i> Payments</a></li>
+            <li><a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="table-container">
+            <h2>Doctor Details</h2>
+            <table>
+                <thead>
+                    <tr>
+                        
+                        <th>Name</th>
+                        <th>Password</th>
+                        <th>Qualifications</th>
+                        <th>Phone Number</th>
+                        <th>Email</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                     
+                        <td contenteditable="true" class="new-name"></td>
+                        <td contenteditable="true" class="new-password"></td>
+                        <td contenteditable="true" class="new-qualification"></td>
+                        <td contenteditable="true" class="new-phone"></td>
+                        <td contenteditable="true" class="new-email"></td>
+                        <td>
+                            <button class="add-btn"><i class="fas fa-plus-circle"></i></button>
+                        </td>
+                    </tr>
+                    {% for doctor in doctors %}
+                    <tr data-id="{{ doctor.doctor_id }}">
+                       
+                        <td contenteditable="false" class="editable name">{{ doctor.name }}</td>
+                        <td contenteditable="false" class="editable password">{{ doctor.password }}</td>
+                        <td contenteditable="false" class="editable qualification">{{ doctor.qualification }}</td>
+                        <td contenteditable="false" class="editable phone">{{ doctor.phone }}</td>
+                        <td contenteditable="false" class="editable email">{{ doctor.email }}</td>
+                        <td>
+                            <button class="edit-btn"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="save-btn" style="display:none;"><i class="fas fa-save"></i></button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">No doctors found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>                
+            </table>
+        </div>
+    </div>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+            document.querySelector('.add-btn').addEventListener('click', function () {
+                const row = this.closest('tr');
+            
+                const name = row.querySelector('.new-name').innerText.trim();
+                const password = row.querySelector('.new-password').innerText.trim();
+                const qualification = row.querySelector('.new-qualification').innerText.trim();
+                const phone = row.querySelector('.new-phone').innerText.trim();
+                const email = row.querySelector('.new-email').innerText.trim();
+            
+                if (!name || !password || !email || !phone) {
+                    showToast("Name, Password, Email & Phone are required.", "red");
+                    return;
+                }
+            
+              
+                const phoneRegex = /^\d{10}$/;
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+                if (!phoneRegex.test(phone)) {
+                    showToast("Invalid phone number. Must be 10 digits.", "orange");
+                    return;
+                }
+                if (!emailRegex.test(email)) {
+                    showToast("Invalid email format.", "orange");
+                    return;
+                }
+            
+                const data = {
+                    name,
+                    password,
+                    qualification,
+                    phone,
+                    email,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                };
+            
+                fetch("{% url 'add_doctor_inline' %}", {
+                    method: "POST",
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(data)
+                })
+                .then(res => res.json())
+                .then(response => {
+                    if (response.status === 'success') {
+                        showToast("Doctor added successfully!", "green");
+                        setTimeout(() => window.location.reload(), 1000); 
+                    } else {
+                        showToast(response.message || "Something went wrong!", "red");
+                    }
+                })
+                .catch(() => showToast("Server error. Try again later.", "red"));
+            });
+    
+            function showToast(message, color) {
+                Toastify({
+                    text: message,
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: color,
+                    stopOnFocus: true
+                }).showToast();
+            }            
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const row = btn.closest('tr');
+                row.querySelectorAll('.editable').forEach(td => td.contentEditable = true);
+                row.querySelector('.save-btn').style.display = 'inline-block';
+                btn.style.display = 'none';
+            });
+        });
+        
+        document.querySelectorAll('.save-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const row = btn.closest('tr');
+                const id = row.getAttribute('data-id');
+        
+                const data = {
+                    doctor_id: id,
+                    name: row.querySelector('.name').innerText.trim(),
+                    password: row.querySelector('.password').innerText.trim(),
+                    qualification: row.querySelector('.qualification').innerText.trim(),
+                    phone: row.querySelector('.phone').innerText.trim(),
+                    email: row.querySelector('.email').innerText.trim(),
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                };
+        
+                fetch("{% url 'update_doctor_inline' %}", {
+                    method: "POST",
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(data)
+                })
+                .then(res => res.json())
+                .then(response => {
+                    alert("Updated successfully!");
+                    row.querySelectorAll('.editable').forEach(td => td.contentEditable = false);
+                    row.querySelector('.edit-btn').style.display = 'inline-block';
+                    btn.style.display = 'none';
+                })
+                .catch(err => alert("Failed to update."));
+            });
+        });
+        </script>        
+</body>
+</html>

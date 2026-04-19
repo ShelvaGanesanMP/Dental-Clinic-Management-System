@@ -1,0 +1,199 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treatment Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/treatment.css' %}">
+    <style>
+      .logo {
+            position: absolute;
+            top: 5px;
+            right: 25px;
+            width: 200px; 
+            height: 200px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <img src="{% static "images/logo1.png" %}" alt="Logo" class="logo">
+        <ul>
+            <li><a href="{% url 'analytics_dashboard' %}"><i class="fa-solid fa-house"></i> Home</a></li>
+            <li><a href="{% url 'view_doctors' %}"><i class="fas fa-user-md"></i> Add Doctors</a></li>
+            <li><a href="{% url 'view_schedule' %}"><i class="fas fa-calendar"></i> Doctor Schedule</a></li>
+            <li><a href="{% url 'patient_dashboard' %}"><i class="fas fa-user-plus"></i> Patients</a></li>
+            <li><a href="{% url 'all_appointments' %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
+            <li><a href="{% url 'treatment' %}"><i class="fa-solid fa-stethoscope"></i> Treatments</a></li>
+            <li><a href="{% url 'lab_orders' %}"><i class="fa-solid fa-microscope"></i></i>Lab</a></li>
+            <li><a href="{% url 'payment_summary' %}"><i class="fas fa-dollar-sign"></i> Payments</a></li>
+            <li><a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i>Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h1>Treatments</h1>
+            <div class="top-buttons">
+                <button class="btn add-treatment-btn">Add Treatment</button>
+            </div>
+        </div>
+
+        <div id="addTreatmentModal" class="modal">
+            <div class="modal-content">
+              <span class="close">&times;</span>
+              <h2>Add Treatment</h2>
+              <form method="POST">
+                  {% csrf_token %}
+                  {{ form.as_p }}
+                  <button type="submit" class="btn submit-btn">Submit</button>
+              </form>
+            </div>
+          </div>
+
+        <table class="order-table">
+            <thead>
+                <tr>
+                    <th>SL</th>
+                    <th>Treatment Name</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="treatmentTableBody">
+                {% for treatment in treatments %}
+                  <tr id="row-{{ treatment.id }}">
+                      <td>{{ treatment.id }}</td>
+                      <td class="editable" contenteditable="false" data-field="name">{{ treatment.name }}</td>
+                      <td class="editable" contenteditable="false" data-field="price">{{ treatment.price }}</td>
+                      <td>
+                          <i class="fas fa-pen edit-icon" onclick="enableEdit({{ treatment.id }})"></i>
+                          <i class="fas fa-save save-icon" style="display:none;" onclick="saveEdit({{ treatment.id }})"></i>
+                          <i class="fas fa-trash delete-icon" onclick="deleteTreatment({{ treatment.id }})"></i>
+                      </td>
+                  </tr>
+                {% endfor %}
+              </tbody>              
+        </table>
+    </div>
+
+    <script>
+        const modal = document.getElementById("addTreatmentModal");
+const openBtn = document.querySelector(".add-treatment-btn");
+const closeBtn = document.querySelector(".close");
+const form = document.getElementById("addTreatmentForm");
+const tbody = document.getElementById("treatmentTableBody");
+
+let treatmentId = 2; // Starting ID after the sample
+
+openBtn.onclick = () => modal.style.display = "block";
+closeBtn.onclick = () => modal.style.display = "none";
+
+window.onclick = (e) => {
+    if (e.target === modal) modal.style.display = "none";
+};
+
+form.onsubmit = (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("treatmentName").value.trim();
+    const price = document.getElementById("price").value.trim();
+
+    if (name && price) {
+        const newRow = document.createElement("tr");
+        newRow.innerHTML = `
+            <td>${treatmentId++}</td>
+            <td>${name}</td>
+            <td>₹${price}</td>
+            <td>
+                <i class="fas fa-pen edit-icon"></i>
+                <i class="fas fa-trash delete-icon"></i>
+            </td>
+        `;
+        tbody.appendChild(newRow);
+
+        modal.style.display = "none";
+        form.reset();
+    }
+};
+
+    function enableEdit(id) {
+        const row = document.getElementById(`row-${id}`);
+        row.querySelectorAll('.editable').forEach(cell => {
+            cell.contentEditable = true;
+            cell.classList.add('editing');
+        });
+        row.querySelector('.edit-icon').style.display = 'none';
+        row.querySelector('.save-icon').style.display = 'inline';
+    }
+    
+    function saveEdit(id) {
+        const row = document.getElementById(`row-${id}`);
+        const name = row.querySelector('[data-field="name"]').innerText.trim();
+        const price = row.querySelector('[data-field="price"]').innerText.trim();
+    
+        fetch(`/update-treatment/${id}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ name, price }),
+        })
+        .then(response => {
+            if (response.ok) {
+                row.querySelectorAll('.editable').forEach(cell => {
+                    cell.contentEditable = false;
+                    cell.classList.remove('editing');
+                });
+                row.querySelector('.edit-icon').style.display = 'inline';
+                row.querySelector('.save-icon').style.display = 'none';
+            } else {
+                alert("Update failed");
+            }
+        });
+    }
+    
+    function deleteTreatment(id) {
+        if (!confirm("Are you sure to delete this treatment?")) return;
+    
+        fetch(`/delete-treatment/${id}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                document.getElementById(`row-${id}`).remove();
+            } else {
+                alert("Delete failed");
+            }
+        });
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    </script>
+</body>
+</html>

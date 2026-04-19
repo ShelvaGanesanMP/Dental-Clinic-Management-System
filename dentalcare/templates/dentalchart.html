@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dental Chart - {{ patient.name }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1, h2 { color: #2d2d2d; margin-top: 30px; }
+    .section-container {
+      border: 1px solid #ccc; border-radius: 10px;
+      padding: 20px; margin-bottom: 25px;
+      background-color: #fafafa;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+    .btn-group button, button, input, select {
+      font-size: 14px; border-radius: 6px; padding: 6px 10px; cursor: pointer;
+    }
+    button { background-color: #2b6777; color: white; border: none; }
+    button:hover { background-color: #3c9683; }
+    input, select {
+      width: 100%; border: 1px solid #ccc; padding: 6px; box-sizing: border-box;
+    }
+    .tooth-container, .teeth-row {
+      display: flex; flex-wrap: wrap; justify-content: center; margin: 10px 0;
+    }
+    .tooth {
+      margin: 5px; text-align: center; cursor: pointer; position: relative;
+    }
+    .tooth img {
+      width: 70px; height: 100px; transition: opacity 0.3s, filter 0.3s;
+    }
+    .tooth span { font-size: 12px; margin-top: 2px; display: block; }
+    .impacted { filter: hue-rotate(-50deg) brightness(0.7) saturate(1.5); }
+    .hidden { opacity: 0.2; }
+    .back-button {
+      background-color: #2b6777;
+      border: none; padding: 8px 16px; margin: 10px;
+      border-radius: 5px; cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: background 0.2s ease;
+    }
+    .back-button:hover { background-color: #3c9683; }
+    .a back-button {
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <a href="{% url 'patient_dashboard' %}#row-{{ request.GET.back_id }}" style="text-decoration: none;"><button  class="back-button">⬅ Back</button></a>
+  <h1>Dental History</h1>
+
+  <!-- Patient Info -->
+  <div class="section-container">
+    <h2>Patient Information</h2>
+    <p><strong>Name:</strong> {{ patient.name }}</p>
+    <p><strong>Age:</strong> {{ patient.age }}</p>
+    <p><strong>Gender:</strong> {{ patient.gender }}</p>
+  </div>
+
+  <!-- Permanent Teeth -->
+  <div class="section-container">
+    <h2>Permanent Teeth</h2>
+    <div class="btn-group">
+      <button onclick="setMode('normal')">Normal</button>
+      <button onclick="setMode('missing')">Missing</button>
+      <button onclick="setMode('impacted')">Impacted</button>
+      <button onclick="editMode = !editMode; alert('Edit mode ' + (editMode ? 'enabled' : 'disabled'));">Edit</button>
+    </div>
+    <div class="teeth-row" id="upper-row"></div>
+    <div class="teeth-row" id="lower-row"></div>
+  </div>
+
+  <!-- Deciduous Teeth -->
+  <div class="section-container">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <h2>Deciduous Teeth</h2>
+      <label style="font-weight: normal;">
+        <input type="checkbox" id="deciduousToggle" onchange="toggleDeciduousSection()"> Show
+      </label>
+    </div>
+
+    <div id="deciduousSection" style="display: none;">
+      <div class="btn-group">
+        <button onclick="setDeciduousMode('normal')">Normal</button>
+        <button onclick="setDeciduousMode('missing')">Missing</button>
+        <button onclick="setDeciduousMode('impacted')">Impacted</button>
+        <button onclick="deciduousEditMode = !deciduousEditMode; alert('Deciduous Edit mode ' + (deciduousEditMode ? 'enabled' : 'disabled'));">Edit</button>
+      </div>
+      <div class="teeth-row" id="decid-upper-row"></div>
+      <div class="teeth-row" id="decid-lower-row"></div>
+    </div>
+  </div>
+
+  <form method="post" action="{% url 'save_dental_chart' patient.id %}">
+    {% csrf_token %}
+    <input type="hidden" name="permanent_data" id="permanent_data">
+    <input type="hidden" name="deciduous_data" id="deciduous_data">
+    <button type="submit" style="margin-top: 20px;">Save Dental Chart</button>
+  </form>
+
+  <!-- JS for interaction -->
+  <script>
+    let currentMode = 'normal', editMode = false;
+    const teethData = JSON.parse(`{{ permanent_data|safe }}`);  // Django context
+    const deciduousData = JSON.parse(`{{ deciduous_data|safe }}`);
+
+    function renderTeeth() {
+      const upper = document.getElementById('upper-row');
+      const lower = document.getElementById('lower-row');
+      upper.innerHTML = lower.innerHTML = '';
+      teethData.forEach((tooth, i) => {
+        const div = document.createElement('div');
+        div.className = 'tooth'; div.dataset.index = i;
+        div.innerHTML = `<img src="/static/images/teeth${tooth.number}.jpeg" class="${tooth.status === 'missing' ? 'hidden' : ''} ${tooth.status === 'impacted' ? 'impacted' : ''}"><span>${tooth.number}</span>`;
+        div.onclick = () => editMode && toggleTooth(i);
+        (i < 16 ? upper : lower).appendChild(div);
+      });
+      document.getElementById('permanent_data').value = JSON.stringify(teethData);
+    }
+
+    function toggleTooth(i) {
+      teethData[i].status = currentMode === teethData[i].status ? 'normal' : currentMode;
+      renderTeeth();
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+    }
+
+    // Deciduous Section
+    let deciduousEditMode = false, deciduousCurrentMode = 'normal';
+
+    function renderDeciduousTeeth() {
+      const upper = document.getElementById('decid-upper-row');
+      const lower = document.getElementById('decid-lower-row');
+      upper.innerHTML = lower.innerHTML = '';
+      deciduousData.forEach((tooth, i) => {
+        const div = document.createElement('div');
+        div.className = 'tooth'; div.dataset.index = i;
+        div.innerHTML = `<img src="/static/images/decid${tooth.number}.jpeg" class="${tooth.status === 'missing' ? 'hidden' : ''} ${tooth.status === 'impacted' ? 'impacted' : ''}"><span>${tooth.number}</span>`;
+        div.onclick = () => deciduousEditMode && toggleDeciduousTooth(i);
+        (i < 10 ? upper : lower).appendChild(div);
+      });
+      document.getElementById('deciduous_data').value = JSON.stringify(deciduousData);
+    }
+
+    function toggleDeciduousTooth(i) {
+      deciduousData[i].status = deciduousCurrentMode === deciduousData[i].status ? 'normal' : deciduousCurrentMode;
+      renderDeciduousTeeth();
+    }
+
+    function setDeciduousMode(mode) {
+      deciduousCurrentMode = mode;
+    }
+
+    function toggleDeciduousSection() {
+      document.getElementById('deciduousSection').style.display =
+        document.getElementById('deciduousToggle').checked ? 'block' : 'none';
+    }
+
+    renderTeeth();
+    renderDeciduousTeeth();
+  </script>
+</body>
+</html>
